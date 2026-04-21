@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#10b981">
+    <title>AsetDesa - Sistem Manajemen Inventaris Modern</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAADFJREFUOE9jZKAQMFKon2HUAAaDMRgNwyCG0fQEMHwYjA2jGYjRZASoYTSDUR4M9AAAk2cACeP+x+IAAAAASUVORK5CYII=">
+
+    <!-- ============================================== -->
+    <!-- FILE: source/assets/css/style.css START -->
+    <style>
+        :root { --color-primary: #10b981; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+        
+        .btn-press { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-press:active { transform: scale(0.96); }
+        
+        /* Smooth Animations */
+        @keyframes fadeSlideUp { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+        .animate-fade-up { animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        
+        /* Staggered Animation Delays */
+        .delay-0 { animation-delay: 0s; }
+        .delay-1 { animation-delay: 0.05s; }
+        .delay-2 { animation-delay: 0.1s; }
+        .delay-3 { animation-delay: 0.15s; }
+        .delay-4 { animation-delay: 0.2s; }
+        
+        @keyframes slideInRight { 0% { transform: translateX(100%); } 100% { transform: translateX(0); } }
+        .animate-toast { animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        /* Premium UI Elements */
+        .glass-nav { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-top: 1px solid rgba(0,0,0,0.05); }
+        .dark .glass-nav { background: rgba(15, 23, 42, 0.85); border-top: 1px solid rgba(255,255,255,0.05); }
+        .glass-modal { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        .pb-safe { padding-bottom: calc(140px + env(safe-area-inset-bottom, 20px)) !important; }
+        
+        /* Print Area Formatting */
+        @media print { 
+            body * { visibility: hidden; } 
+            body.print-mode-report #print-area, body.print-mode-report #print-area * { visibility: visible; } 
+            body.print-mode-report #print-area { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0; padding: 5mm; }
+            
+            body.print-mode-qr #qr-print-area, body.print-mode-qr #qr-print-area * { visibility: visible; }
+            body.print-mode-qr #qr-print-area { 
+                position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; 
+                display: grid !important; grid-template-columns: repeat(3, 1fr) !important; 
+                gap: 5mm !important; padding: 5mm !important; margin: 0;
+            }
+            body.print-mode-qr .qr-card { page-break-inside: avoid; border: 2px solid #000; padding: 12px; text-align: center; border-radius: 8px; }
+            @page { size: A4 portrait; margin: 5mm; } 
+        }
+
+        /* Hide HTML5 QR default texts */
+        #qr-reader__dashboard_section_csr span { color: white !important; }
+        #qr-reader a { display: none !important; }
+    </style>
+    <!-- FILE: source/assets/css/style.css END -->
+    <!-- ============================================== -->
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { primary: 'var(--color-primary)', darkBg: '#0f172a', darkSurface: '#1e293b' } } }
+        }
+    </script>
+
+    <!-- Library Eksternal (Excel, Chart, Icons, QR) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-darkBg dark:text-slate-200 font-sans h-screen flex overflow-hidden selection:bg-primary selection:text-white transition-colors duration-300">
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- SIDEBAR DESKTOP -->
+    <aside class="hidden md:flex flex-col w-72 bg-white dark:bg-darkSurface border-r border-slate-200 dark:border-slate-800 z-20 shadow-lg shadow-slate-200/50 dark:shadow-none transition-colors duration-300">
+        <div class="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800/50">
+            <!-- Tempat Logo -->
+            <div id="app-logo-desktop-container" class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-primary/30 overflow-hidden shrink-0">
+                <span id="app-logo-initial-desktop">A</span>
+                <img id="app-logo-img-desktop" src="" class="w-full h-full object-cover hidden" alt="Logo">
+            </div>
+            <div>
+                <h1 id="app-name-desktop" class="font-extrabold text-lg leading-tight tracking-tight">AsetDesa</h1>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Pemerintahan</p>
+            </div>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-1" id="desktop-nav"></nav>
+        <div class="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2 bg-slate-50 dark:bg-darkBg">
+            <button onclick="openScannerModal()" class="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 transition-colors btn-press shadow-xl shadow-slate-900/20 dark:shadow-white/10 hover:-translate-y-0.5">
+                <i data-lucide="scan-line" class="w-5 h-5"></i><span class="font-bold text-sm">Scan QR Kamera</span>
+            </button>
+            <button onclick="toggleTheme()" class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors btn-press text-slate-600 dark:text-slate-400">
+                <i data-lucide="moon" id="theme-icon-desktop" class="w-4 h-4"></i><span class="font-medium text-sm" id="theme-text-desktop">Mode Gelap</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative bg-slate-50 dark:bg-darkBg transition-colors duration-300">
+        <header class="bg-white/80 dark:bg-darkSurface/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 p-4 sticky top-0 z-10 flex items-center justify-between transition-colors duration-300">
+            <div class="flex items-center gap-3 md:hidden">
+                <div id="app-logo-mobile-container" class="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md shadow-primary/30 overflow-hidden shrink-0">
+                    <span id="app-logo-initial-mobile">A</span>
+                    <img id="app-logo-img-mobile" src="" class="w-full h-full object-cover hidden" alt="Logo">
+                </div>
+                <h1 id="app-name-mobile" class="font-extrabold text-lg tracking-tight">AsetDesa</h1>
+            </div>
+            <div class="hidden md:block"><h2 id="page-title" class="text-2xl font-extrabold text-slate-800 dark:text-white">Dashboard</h2></div>
+            
+            <div class="flex items-center gap-2">
+                <button onclick="openScannerModal()" class="md:hidden p-2 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 btn-press shadow-lg hover:scale-105 transition-transform">
+                    <i data-lucide="scan-line" class="w-5 h-5"></i>
+                </button>
+                <button onclick="toggleTheme()" class="md:hidden p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 btn-press">
+                    <i data-lucide="moon" id="theme-icon-mobile" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
+
+        <div id="app-content" class="flex-1 overflow-y-auto p-4 md:p-8 pb-safe relative scroll-smooth"></div>
+    </main>
+
+    <!-- BOTTOM NAV MOBILE -->
+    <nav class="md:hidden fixed bottom-0 left-0 w-full glass-nav z-30 pb-[env(safe-area-inset-bottom)]">
+        <div class="flex justify-around items-center h-16 px-1" id="mobile-nav"></div>
+    </nav>
+
+    <!-- MODALS & PRINT AREAS -->
+    <div id="modal-container"></div>
+    <div id="print-area" class="hidden text-black bg-white"></div>
+    <div id="qr-print-area" class="hidden text-black bg-white"></div>
+
+    <!-- ============================================== -->
+    <!-- FILE: source/assets/js/app.js START -->
+    <script>
+        const APP_VERSION = '4.0.1'; // Update version
+        let currentState = {
+            view: 'dashboard', 
+            theme: localStorage.getItem('asetdesa_theme') || 'light',
+            appName: localStorage.getItem('asetdesa_name') || 'AsetDesa',
+            appLogo: localStorage.getItem('asetdesa_logo') || '',
+            primaryColor: localStorage.getItem('asetdesa_color') || '#10b981',
+            items: [], 
+            categories: []
+        };
+
+        const MENUS = [
+            { id: 'dashboard', label: 'Ringkasan', icon: 'layout-dashboard' },
+            { id: 'items', label: 'Buku Aset', icon: 'book-open' },
+            { id: 'categories', label: 'Kategori', icon: 'layers' },
+            { id: 'mutasi', label: 'Mutasi', icon: 'archive-restore' },
+            { id: 'reports', label: 'Laporan', icon: 'bar-chart-2' },
+            { id: 'settings', label: 'Pengaturan', icon: 'settings' }
+        ];
+
+        let html5QrCode = null;
+
+        // --- 1. INDEXEDDB SETUP ---
+        const dbName = 'AsetDesaDB';
+        const dbVersion = 4; 
+        let db;
+
+        const initDB = () => {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, dbVersion);
+                request.onupgradeneeded = (e) => {
+                    db = e.target.result;
+                    if (!db.objectStoreNames.contains('items')) db.createObjectStore('items', { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains('categories')) db.createObjectStore('categories', { keyPath: 'id' });
+                };
+                request.onsuccess = (e) => { db = e.target.result; injectDummyData().then(resolve); };
+                request.onerror = (e) => reject(e.target.error);
+            });
+        };
+
+        const dbAction = (storeName, action, payload = null) => {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], action === 'read' ? 'readonly' : 'readwrite');
+                const store = transaction.objectStore(storeName);
+                let request;
+                if (action === 'read') request = store.getAll();
+                else if (action === 'put') request = store.put(payload);
+                else if (action === 'delete') request = store.delete(payload);
+                else if (action === 'clear') request = store.clear();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        };
+
+        const injectDummyData = async () => {
+            const categories = await dbAction('categories', 'read');
+            if (categories.length === 0) {
+                const dummyCats = [
+                    { id: 'kat-1', name: 'Tanah & Bangunan' }, 
+                    { id: 'kat-2', name: 'Peralatan & Mesin' }, 
+                    { id: 'kat-3', name: 'Kendaraan Dinas' }
+                ];
+                for (let c of dummyCats) await dbAction('categories', 'put', c);
+            }
+            const items = await dbAction('items', 'read');
+            if (items.length === 0) {
+                const dummyItems = [
+                    { id: 'itm-1', code: 'INV-2026-0001', name: 'Kantor Kepala Desa', category: 'kat-1', qty: 1, condition: 'Baik', price: 250000000, date: '2020-01-10', image: '', sumberDana: 'Dana Desa', tahun: 2020, lokasi: 'Jalan Utama Desa', pic: 'Kaur Umum', spesifikasi: 'Luas Tanah 500m2, SHM No. 12345', status: 'Aktif', alasanHapus: '', tglHapus: '', isDummy: true },
+                    { id: 'itm-2', code: 'INV-2026-0002', name: 'Motor Yamaha NMAX', category: 'kat-3', qty: 1, condition: 'Baik', price: 32000000, date: '2026-02-15', image: '', sumberDana: 'PADes', tahun: 2026, lokasi: 'Garasi Desa', pic: 'Sekretaris Desa', spesifikasi: 'Nopol: B 1234 XYZ, No Mesin: YMH123', status: 'Aktif', alasanHapus: '', tglHapus: '', isDummy: true }
+                ];
+                for (let i of dummyItems) await dbAction('items', 'put', i);
+            }
+        };
+
+        // --- 2. UTILS & HELPERS ---
+        const showToast = (message, type = 'success') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `${type === 'success' ? 'bg-primary' : 'bg-red-500'} text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 animate-toast pointer-events-auto border border-white/20`;
+            toast.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}" class="w-5 h-5"></i> <span class="font-medium text-sm">${message}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+            setTimeout(() => { toast.style.animation = 'slideInRight 0.4s reverse forwards'; setTimeout(() => toast.remove(), 400); }, 3000);
+        };
+
+        const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+        
+        const formatTanggal = (isoDate) => {
+            if(!isoDate) return '-'; const parts = isoDate.split('-');
+            return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : isoDate;
+        };
+
+        const applySettings = () => {
+            // Apply Colors
+            document.documentElement.style.setProperty('--color-primary', currentState.primaryColor);
+            document.querySelector('meta[name="theme-color"]').setAttribute("content", currentState.primaryColor);
+            
+            // Apply Name
+            document.getElementById('app-name-desktop').textContent = currentState.appName;
+            document.getElementById('app-name-mobile').textContent = currentState.appName;
+            document.getElementById('app-logo-initial-desktop').textContent = currentState.appName.charAt(0).toUpperCase();
+            document.getElementById('app-logo-initial-mobile').textContent = currentState.appName.charAt(0).toUpperCase();
+
+            // Apply Logo
+            const logoDImg = document.getElementById('app-logo-img-desktop');
+            const logoMImg = document.getElementById('app-logo-img-mobile');
+            const logoDTxt = document.getElementById('app-logo-initial-desktop');
+            const logoMTxt = document.getElementById('app-logo-initial-mobile');
+
+            if (currentState.appLogo) {
+                logoDImg.src = currentState.appLogo; logoMImg.src = currentState.appLogo;
+                logoDImg.classList.remove('hidden'); logoMImg.classList.remove('hidden');
+                logoDTxt.classList.add('hidden'); logoMTxt.classList.add('hidden');
+            } else {
+                logoDImg.classList.add('hidden'); logoMImg.classList.add('hidden');
+                logoDTxt.classList.remove('hidden'); logoMTxt.classList.remove('hidden');
+            }
+            
+            // Apply Theme
+            const isDark = currentState.theme === 'dark';
+            document.documentElement.classList.toggle('dark', isDark);
+            document.getElementById('theme-text-desktop').textContent = isDark ? 'Mode Terang' : 'Mode Gelap';
+            document.getElementById('theme-icon-desktop').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+            document.getElementById('theme-icon-mobile').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+            lucide.createIcons();
+        };
+
+        const toggleTheme = () => {
+            currentState.theme = currentState.theme === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('asetdesa_theme', currentState.theme);
+            applySettings(); if(currentState.view === 'reports') renderReports();
+        };
+
+        const renderEduBanner = (title, text, icon = 'info') => {
+            return `
+            <div class="bg-primary/5 dark:bg-primary/10 border border-primary/20 p-4 rounded-2xl mb-6 flex items-start gap-4 animate-fade-up shadow-sm">
+                <div class="p-2.5 bg-primary/10 dark:bg-primary/20 rounded-xl text-primary shrink-0 shadow-inner">
+                    <i data-lucide="${icon}" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="font-extrabold text-primary text-sm mb-1">${title}</h4>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">${text}</p>
+                </div>
+            </div>`;
+        };
+
+        // --- 3. NAVIGATION & ROUTING ---
+        const switchView = async (viewId) => {
+            currentState.view = viewId;
+            document.getElementById('page-title').textContent = MENUS.find(m => m.id === viewId).label;
+            renderNavigation();
+            const content = document.getElementById('app-content');
+            content.innerHTML = '<div class="flex justify-center items-center h-64"><div class="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent"></div></div>';
+            
+            await loadData();
+            content.innerHTML = '';
+            
+            const viewContainer = document.createElement('div'); 
+            
+            if (viewId === 'dashboard') renderDashboard(viewContainer);
+            else if (viewId === 'items') renderItems(viewContainer);
+            else if (viewId === 'categories') renderCategories(viewContainer);
+            else if (viewId === 'mutasi') renderMutasi(viewContainer);
+            else if (viewId === 'reports') renderReports(viewContainer);
+            else if (viewId === 'settings') renderSettings(viewContainer);
+            
+            content.appendChild(viewContainer); lucide.createIcons(); content.scrollTo(0,0);
+        };
+
+        const renderNavigation = () => {
+            const desktopNav = document.getElementById('desktop-nav'); const mobileNav = document.getElementById('mobile-nav');
+            desktopNav.innerHTML = ''; mobileNav.innerHTML = '';
+
+            MENUS.forEach(menu => {
+                const isActive = currentState.view === menu.id;
+                // Desktop Nav
+                const dBtn = document.createElement('button'); dBtn.onclick = () => switchView(menu.id);
+                dBtn.className = `w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 btn-press ${isActive ? 'bg-primary text-white font-bold shadow-lg shadow-primary/30 transform scale-105' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 font-medium'}`;
+                dBtn.innerHTML = `<i data-lucide="${menu.icon}" class="w-5 h-5"></i> <span>${menu.label}</span>`;
+                desktopNav.appendChild(dBtn);
+
+                // Mobile Nav
+                const mBtn = document.createElement('button'); mBtn.onclick = () => switchView(menu.id);
+                mBtn.className = `flex flex-col items-center justify-center w-14 btn-press ${isActive ? 'text-primary' : 'text-slate-500 dark:text-slate-400'}`;
+                mBtn.innerHTML = `
+                    <div class="${isActive ? 'bg-primary/10 scale-110' : ''} p-1.5 rounded-full mb-1 transition-all duration-300">
+                        <i data-lucide="${menu.icon}" class="w-5 h-5 ${isActive ? 'fill-primary/20' : ''}"></i>
+                    </div>
+                    <span class="text-[9px] ${isActive ? 'font-bold' : 'font-medium'} whitespace-nowrap transition-all">${menu.label}</span>`;
+                mobileNav.appendChild(mBtn);
+            });
+            lucide.createIcons();
+        };
+
+        const loadData = async () => {
+            currentState.items = await dbAction('items', 'read');
+            currentState.items = currentState.items.map(i => ({...i, status: i.status || 'Aktif'})); 
+            currentState.categories = await dbAction('categories', 'read');
+        };
+
+        // --- 4. VIEWS ---
+
+        // DASHBOARD
+        const renderDashboard = (container) => {
+            const aktifItems = currentState.items.filter(i => i.status === 'Aktif');
+            const mutasiItems = currentState.items.filter(i => i.status === 'Dihapus');
+            const totalNilai = aktifItems.reduce((sum, item) => sum + (parseFloat(item.price) * parseInt(item.qty)), 0);
+            
+            let html = renderEduBanner(
+                'Selamat Datang di Sistem Aset', 
+                'Ini adalah halaman Ringkasan. Anda dapat memantau total kekayaan desa, kondisi aset fisik secara keseluruhan, serta jumlah aset yang aktif dan yang telah dihapuskan secara real-time.',
+                'home'
+            );
+
+            html += `
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white dark:bg-darkSurface p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 animate-fade-up delay-0 hover:-translate-y-1 transition-transform">
+                        <p class="text-[10px] text-slate-500 mb-2 font-extrabold uppercase tracking-widest">Total Aset Aktif</p>
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">${aktifItems.length}</h3>
+                        <div class="mt-3 text-[10px] bg-slate-100 dark:bg-slate-800 inline-block px-2 py-1 rounded-lg text-slate-600 font-bold">Unit Fisik</div>
+                    </div>
+                    <div class="bg-primary p-5 rounded-3xl shadow-xl shadow-primary/30 text-white animate-fade-up delay-1 hover:-translate-y-1 transition-transform">
+                        <p class="text-[10px] text-white/80 mb-2 font-extrabold uppercase tracking-widest">Nilai Rupiah</p>
+                        <h3 class="text-2xl font-black truncate" title="${formatRupiah(totalNilai)}">${(totalNilai/1000000).toFixed(1)} Juta</h3>
+                        <div class="mt-3 text-[10px] bg-white/20 inline-block px-2 py-1 rounded-lg font-bold">Estimasi Total</div>
+                    </div>
+                    <div class="bg-white dark:bg-darkSurface p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 animate-fade-up delay-2 hover:-translate-y-1 transition-transform">
+                        <p class="text-[10px] text-slate-500 mb-2 font-extrabold uppercase tracking-widest">Kondisi Baik</p>
+                        <h3 class="text-3xl font-black text-green-500">${aktifItems.filter(i=>i.condition==='Baik').length}</h3>
+                        <div class="mt-3 text-[10px] bg-green-50 dark:bg-green-900/30 inline-block px-2 py-1 rounded-lg text-green-600 font-bold">Aman & Terawat</div>
+                    </div>
+                    <div class="bg-white dark:bg-darkSurface p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 animate-fade-up delay-3 hover:-translate-y-1 transition-transform">
+                        <p class="text-[10px] text-slate-500 mb-2 font-extrabold uppercase tracking-widest">Telah Dihapus</p>
+                        <h3 class="text-3xl font-black text-red-500">${mutasiItems.length}</h3>
+                        <div class="mt-3 text-[10px] bg-red-50 dark:bg-red-900/30 inline-block px-2 py-1 rounded-lg text-red-600 font-bold">Masuk Buku Mutasi</div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        };
+
+        // BUKU ASET (ITEMS)
+        const renderItems = (container) => {
+            const search = localStorage.getItem('asetdesa_search') || '';
+            const aktifItems = currentState.items.filter(i => i.status === 'Aktif');
+            const filtered = aktifItems.filter(i => i.name.toLowerCase().includes(search.toLowerCase()) || i.code.toLowerCase().includes(search.toLowerCase()));
+
+            let html = renderEduBanner(
+                'Buku Inventaris Induk', 
+                'Gunakan menu ini untuk mendata aset baru, memantau rincian spesifikasi, melihat penanggung jawab, dan mencetak Label QR Code untuk ditempel pada fisik barang.',
+                'book-open'
+            );
+
+            html += `
+                <div class="flex flex-col md:flex-row gap-3 mb-5 items-center justify-between animate-fade-up delay-0">
+                    <div class="relative w-full md:w-80">
+                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                        <input type="text" id="search-item" value="${search}" placeholder="Ketik nama atau kode aset..." class="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkSurface focus:ring-2 focus:ring-primary outline-none transition-shadow text-sm font-medium shadow-sm">
+                    </div>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <button onclick="printQRMassal()" class="flex-1 md:flex-none bg-slate-800 hover:bg-slate-900 text-white dark:bg-slate-700 px-5 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 btn-press text-sm shadow-lg transition-colors">
+                            <i data-lucide="qr-code" class="w-4 h-4"></i> Cetak QR Massal
+                        </button>
+                        <button onclick="openModalItem()" class="flex-1 md:flex-none bg-primary hover:bg-emerald-600 text-white px-5 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 btn-press shadow-lg shadow-primary/30 text-sm transition-colors">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Tambah Aset
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Desktop Table Layout
+            html += `<div class="hidden md:block bg-white dark:bg-darkSurface rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden animate-fade-up delay-1">
+                <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-800 uppercase text-[10px] tracking-wider text-slate-500 font-extrabold"><tr>
+                    <th class="p-5 w-16 text-center">Foto</th>
+                    <th class="p-5">Kode & Deskripsi</th>
+                    <th class="p-5">Legalitas & Spesifikasi</th>
+                    <th class="p-5 text-center">Stok & Kondisi</th>
+                    <th class="p-5 text-right">Nilai (Rp)</th>
+                    <th class="p-5 text-center w-36">Aksi</th>
+                </tr></thead><tbody class="divide-y divide-slate-50 dark:divide-slate-800/50">`;
+            
+            filtered.forEach((item, index) => {
+                const catName = currentState.categories.find(c => c.id === item.category)?.name || '-';
+                html += `
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
+                    <td class="p-4"><div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden shrink-0 mx-auto border border-slate-200 dark:border-slate-700">${item.image ? `<img src="${item.image}" class="w-full h-full object-cover">` : `<i data-lucide="image" class="text-slate-400 w-5 h-5"></i>`}</div></td>
+                    <td class="p-4"><div class="font-bold text-primary text-[10px] px-2 py-0.5 bg-primary/10 inline-block rounded mb-1">${item.code}</div><div class="font-extrabold text-sm text-slate-800 dark:text-white">${item.name}</div><div class="text-[10px] text-slate-500 font-semibold mt-1 uppercase">${catName}</div></td>
+                    <td class="p-4 text-[11px] text-slate-600 dark:text-slate-400 font-medium space-y-1">
+                        <div class="flex items-center gap-1.5"><i data-lucide="user" class="w-3 h-3 text-slate-400"></i> <span class="text-slate-800 dark:text-slate-200">${item.pic || 'Belum Diatur'}</span></div>
+                        <div class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-3 h-3 text-slate-400"></i> Th. ${item.tahun || '-'} <span class="mx-1 text-slate-300">•</span> ${item.sumberDana || '-'}</div>
+                        <div class="truncate w-48 text-slate-400" title="${item.spesifikasi || '-'}"><i data-lucide="file-text" class="w-3 h-3 inline-block mr-1"></i>${item.spesifikasi || '-'}</div>
+                    </td>
+                    <td class="p-4 text-center">
+                        <span class="font-bold text-base text-slate-800 dark:text-white">${item.qty}</span><br>
+                        <span class="text-[9px] px-2 py-1 rounded-md mt-1 inline-block font-bold ${item.condition === 'Baik' ? 'bg-green-100 text-green-700 dark:bg-green-900/30' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30'} uppercase tracking-wide">${item.condition}</span>
+                    </td>
+                    <td class="p-4 text-right font-black text-slate-800 dark:text-white">${formatRupiah(item.price)}</td>
+                    <td class="p-4 text-center">
+                        <div class="flex justify-center gap-1.5">
+                            <button onclick="viewDetail('${item.id}')" title="Lihat Detail" class="p-2 text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg btn-press transition-colors"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                            <button onclick="openModalItem('${item.id}')" title="Edit Data" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 rounded-lg btn-press transition-colors"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                            <button onclick="${item.isDummy ? `confirmHapusDummy('${item.id}')` : `confirmMutasi('${item.id}')`}" title="${item.isDummy ? 'Hapus Permanen (Data Contoh)' : 'Mutasi/Penghapusan'}" class="p-2 text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-900/50 rounded-lg btn-press transition-colors"><i data-lucide="${item.isDummy ? 'trash-2' : 'archive-x'}" class="w-4 h-4"></i></button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+            if(filtered.length===0) html += '<tr><td colspan="6" class="p-10 text-center text-slate-500 font-medium">Belum ada aset terdaftar.</td></tr>';
+            html += `</tbody></table></div>`;
+
+            // Mobile Card Layout
+            html += `<div class="md:hidden grid grid-cols-1 gap-4">`;
+            filtered.forEach((item, index) => {
+                const catName = currentState.categories.find(c => c.id === item.category)?.name || '-';
+                const delay = (index % 5) + 1; // loop animation delays 1-5
+                html += `
+                <div class="bg-white dark:bg-darkSurface p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 animate-fade-up delay-${delay}">
+                    <div class="flex gap-4 mb-4">
+                        <div class="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700">
+                            ${item.image ? `<img src="${item.image}" class="w-full h-full object-cover">` : `<i data-lucide="image" class="text-slate-300 w-8 h-8"></i>`}
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="text-[9px] font-extrabold text-primary bg-primary/10 px-2 py-1 rounded tracking-wide">${item.code}</span>
+                                <span class="text-[9px] px-2 py-1 rounded font-extrabold uppercase tracking-wide ${item.condition === 'Baik' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">${item.condition}</span>
+                            </div>
+                            <h3 class="font-extrabold text-base leading-tight mb-1 text-slate-800 dark:text-white">${item.name}</h3>
+                            <p class="text-[10px] text-slate-500 font-medium"><i data-lucide="user" class="w-3 h-3 inline pb-0.5"></i> ${item.pic||'-'} <span class="mx-1">•</span> <i data-lucide="map-pin" class="w-3 h-3 inline pb-0.5"></i> ${item.lokasi||'-'}</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800/80">
+                        <div>
+                            <p class="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-0.5">Estimasi Nilai</p>
+                            <p class="font-black text-sm text-slate-800 dark:text-white">${item.qty} x ${formatRupiah(item.price)}</p>
+                        </div>
+                        <div class="flex gap-1.5">
+                            <button onclick="viewDetail('${item.id}')" class="p-2.5 text-slate-600 bg-slate-100 dark:bg-slate-800 rounded-xl btn-press"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                            <button onclick="openModalItem('${item.id}')" class="p-2.5 text-blue-600 bg-blue-50 dark:bg-blue-900/30 rounded-xl btn-press"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                            <button onclick="${item.isDummy ? `confirmHapusDummy('${item.id}')` : `confirmMutasi('${item.id}')`}" class="p-2.5 text-red-600 bg-red-50 dark:bg-red-900/30 rounded-xl btn-press"><i data-lucide="${item.isDummy ? 'trash-2' : 'archive-x'}" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            html += `</div><div class="h-32 w-full shrink-0 block md:hidden"></div>`;
+            container.innerHTML = html;
+
+            setTimeout(() => {
+                const searchInput = document.getElementById('search-item');
+                searchInput.addEventListener('input', (e) => {
+                    localStorage.setItem('asetdesa_search', e.target.value);
+                    switchView('items');
+                });
+                searchInput.focus(); const val = searchInput.value; searchInput.setSelectionRange(val.length, val.length);
+            }, 50);
+        };
+
+        // MUTASI (BUKU ASET DIHAPUS)
+        const renderMutasi = (container) => {
+            const mutasiItems = currentState.items.filter(i => i.status === 'Dihapus');
+            
+            let html = renderEduBanner(
+                'Buku Mutasi & Penghapusan', 
+                'Sesuai prosedur pelaporan, aset tidak dihapus permanen. Aset yang rusak berat, hilang, atau dijual akan dipindahkan ke buku ini untuk dipertanggungjawabkan dalam rekapitulasi akhir tahun.',
+                'archive-restore'
+            );
+
+            html += `<div class="bg-white dark:bg-darkSurface rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden animate-fade-up delay-1">
+                <table class="w-full text-left text-sm hidden md:table">
+                <thead class="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-800 uppercase text-[10px] tracking-wider text-slate-500 font-extrabold"><tr>
+                    <th class="p-5">Kode & Nama Aset</th>
+                    <th class="p-5">Status / Alasan Mutasi</th>
+                    <th class="p-5 text-center">Tgl Pencatatan</th>
+                    <th class="p-5 text-center">Aksi</th>
+                </tr></thead><tbody class="divide-y divide-slate-50 dark:divide-slate-800/50">`;
+            
+            mutasiItems.forEach(item => {
+                html += `
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors opacity-75 grayscale-[30%]">
+                    <td class="p-4"><div class="font-extrabold text-slate-600 dark:text-slate-400 text-xs mb-0.5">${item.code}</div><div class="font-bold line-through text-slate-800 dark:text-slate-200">${item.name}</div></td>
+                    <td class="p-4 text-xs"><span class="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400 px-3 py-1 rounded-lg font-bold border border-red-200 dark:border-red-800">${item.alasanHapus || 'Penghapusan'}</span></td>
+                    <td class="p-4 text-center font-bold text-slate-600 dark:text-slate-400">${formatTanggal(item.tglHapus)}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="viewDetail('${item.id}')" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 rounded-xl btn-press transition-colors"><i data-lucide="eye" class="w-3 h-3 inline pb-0.5 mr-1"></i> Detail</button>
+                    </td>
+                </tr>`;
+            });
+            if(mutasiItems.length===0) html += '<tr><td colspan="4" class="p-10 text-center text-slate-500 font-medium">Belum ada riwayat penghapusan aset.</td></tr>';
+            html += `</tbody></table>`;
+
+            // Mobile View Mutasi
+            html += `<div class="md:hidden grid grid-cols-1 gap-4">`;
+            mutasiItems.forEach((item, index) => {
+                const delay = (index % 5) + 1;
+                html += `<div class="bg-white dark:bg-darkSurface p-5 rounded-3xl border border-slate-200 dark:border-slate-700 opacity-80 animate-fade-up delay-${delay}">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-[10px] font-extrabold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">${item.code}</span>
+                        <span class="text-[9px] bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400 px-2 py-1 rounded font-bold">${item.alasanHapus}</span>
+                    </div>
+                    <h3 class="font-extrabold text-sm line-through text-slate-700 dark:text-slate-300">${item.name}</h3>
+                    <p class="text-[10px] text-slate-500 font-medium mt-1">Dicatat pada: ${formatTanggal(item.tglHapus)}</p>
+                    <button onclick="viewDetail('${item.id}')" class="w-full mt-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 btn-press transition-colors"><i data-lucide="file-text" class="w-3 h-3 inline pb-0.5 mr-1"></i> Lihat Keterangan</button>
+                </div>`;
+            });
+            html += `</div></div><div class="h-32 w-full shrink-0 block md:hidden"></div>`;
+            container.innerHTML = html;
+        };
+
+        // KATEGORI
+        const renderCategories = (container) => {
+            let html = renderEduBanner(
+                'Master Kategori Aset', 
+                'Buat pengelompokan yang jelas (Contoh: Peralatan Elektronik, Kendaraan Bermotor, dll) agar pencarian aset dan rekapitulasi data Laporan Excel menjadi rapi.',
+                'layers'
+            );
+
+            html += `
+                <div class="flex justify-end mb-4 animate-fade-up delay-0">
+                    <button onclick="openModalCategory()" class="bg-primary hover:bg-emerald-600 text-white px-5 py-3 rounded-2xl font-bold flex items-center gap-2 btn-press shadow-lg shadow-primary/30 text-sm transition-colors">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Tambah Kategori
+                    </button>
+                </div>
+                <div class="bg-white dark:bg-darkSurface rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden animate-fade-up delay-1">
+                    <div class="grid grid-cols-1 divide-y divide-slate-50 dark:divide-slate-800/50">
+                        ${currentState.categories.map(cat => `
+                            <div class="p-5 flex justify-between items-center hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-inner">
+                                        <i data-lucide="tag" class="w-5 h-5"></i>
+                                    </div>
+                                    <span class="font-extrabold text-sm text-slate-800 dark:text-white">${cat.name}</span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="openModalCategory('${cat.id}')" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 rounded-xl btn-press transition-colors"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                                    <button onclick="confirmHapusKategori('${cat.id}')" class="p-2 text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-xl btn-press transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
+                            </div>
+                        `).join('')}
+                        ${currentState.categories.length === 0 ? '<div class="p-10 text-center text-slate-500 font-medium">Daftar kategori kosong.</div>' : ''}
+                    </div>
+                </div><div class="h-32 w-full shrink-0 block md:hidden"></div>
+            `;
+            container.innerHTML = html;
+        };
+
+        // --- 5. LOGIKA FORM, HARGA & DRAFT ---
+
+        // Auto-Format Rupiah Regex Murni (Tanpa terpotong)
+        const formatInputRupiah = (elem) => {
+            let val = elem.value.replace(/[^0-9]/g, ''); 
+            if(val) { elem.value = new Intl.NumberFormat('id-ID').format(val); }
+            else { elem.value = ''; }
+        };
+
+        const openModalItem = (id = null) => {
+            const nextIdx = currentState.items.length + 1;
+            const paddedIdx = String(nextIdx).padStart(4, '0');
+            const defaultCode = `INV-${new Date().getFullYear()}-${paddedIdx}`;
+
+            let item = { code: defaultCode, name: '', category: '', qty: 1, condition: 'Baik', price: '', image: '', sumberDana: 'Dana Desa', tahun: new Date().getFullYear(), lokasi: '', pic: '', spesifikasi: '', status: 'Aktif', isDummy: false };
+            let isDraft = false;
+
+            if (id) {
+                const found = currentState.items.find(i => i.id === id);
+                if(found) { item = {...found}; item.price = new Intl.NumberFormat('id-ID').format(item.price); }
+            } else {
+                const draft = localStorage.getItem('asetdesa_item_draft');
+                if (draft) { item = JSON.parse(draft); isDraft = true; }
+            }
+
+            const catOptions = currentState.categories.map(c => `<option value="${c.id}" ${item.category === c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+            const isUrl = item.image && item.image.startsWith('http');
+
+            openModal(`
+                <h2 class="text-2xl font-black mb-1 text-slate-800 dark:text-white">${id ? 'Edit Data Aset' : 'Input Aset Baru'}</h2>
+                <p class="text-xs text-slate-500 font-medium mb-6">Lengkapi informasi fisik dan legalitas barang.</p>
+                
+                ${isDraft && !id ? `<div class="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 p-3 rounded-xl mb-6 flex items-start gap-2 animate-pulse"><i data-lucide="alert-circle" class="w-4 h-4 mt-0.5 shrink-0"></i><p class="text-[10px] font-bold">Sistem memulihkan draf ketikan Anda yang belum sempat disimpan sebelumnya.</p></div>` : ''}
+                
+                <form id="form-item" onsubmit="saveItem(event, '${id || ''}')" oninput="!${!!id} && handleItemDraft()" class="space-y-5">
+                    
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-3 gap-2">
+                            <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Foto Fisik Barang</label>
+                            <select id="img-method" onchange="toggleImgMethod()" class="text-xs bg-white dark:bg-darkSurface border border-slate-200 dark:border-slate-600 rounded-lg p-1.5 outline-none font-bold text-slate-700 dark:text-slate-300">
+                                <option value="url" ${isUrl ? 'selected' : ''}>Link URL (Rekomendasi)</option>
+                                <option value="upload" ${!isUrl ? 'selected' : ''}>Upload dari Perangkat</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-4 items-center">
+                            <div class="w-20 h-20 rounded-2xl bg-white dark:bg-darkSurface border border-slate-200 dark:border-slate-600 flex items-center justify-center overflow-hidden shrink-0 relative shadow-inner">
+                                <img id="preview-img" src="${item.image}" class="w-full h-full object-cover ${item.image ? '' : 'hidden'}">
+                                <i data-lucide="image" id="img-placeholder" class="${item.image ? 'hidden' : ''} text-slate-300 w-8 h-8"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div id="input-url-wrapper" class="${!isUrl ? 'hidden' : ''}">
+                                    <input type="url" id="item-image-url" value="${isUrl ? item.image : ''}" oninput="document.getElementById('preview-img').src=this.value; document.getElementById('preview-img').classList.remove('hidden'); document.getElementById('img-placeholder').classList.add('hidden'); !${!!id} && handleItemDraft()" placeholder="Contoh: https://imgur.com/foto.jpg" class="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-600 outline-none focus:border-primary bg-white dark:bg-darkSurface transition-shadow">
+                                    <p class="text-[9px] text-primary mt-1.5 font-bold">*URL disarankan agar foto aman tersimpan walau aplikasi direset.</p>
+                                </div>
+                                <div id="input-upload-wrapper" class="${isUrl ? 'hidden' : ''}">
+                                    <input type="file" accept="image/*" onchange="handleImageUpload(this)" class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-primary/10 file:text-primary cursor-pointer hover:file:bg-primary/20 transition-colors">
+                                </div>
+                                <input type="hidden" id="item-image-base64" value="${!isUrl ? item.image : ''}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1.5">Kode Registrasi</label>
+                            <input type="text" id="item-code" value="${item.code}" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 outline-none focus:border-primary text-sm font-black text-primary transition-shadow">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1.5">Nama Aset</label>
+                            <input type="text" id="item-name" value="${item.name}" required placeholder="Contoh: Laptop Asus" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkSurface outline-none focus:border-primary text-sm font-bold transition-shadow">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1.5">Kategori</label>
+                            <select id="item-category" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkSurface outline-none focus:border-primary text-sm font-bold transition-shadow">
+                                <option value="" disabled ${!item.category ? 'selected' : ''}>Pilih Kategori</option>
+                                ${catOptions}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1.5">Kondisi Fisik</label>
+                            <select id="item-condition" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkSurface outline-none focus:border-primary text-sm font-bold transition-shadow">
+                                <option value="Baik" ${item.condition === 'Baik' ? 'selected' : ''}>Baik</option>
+                                <option value="Kurang Baik" ${item.condition === 'Kurang Baik' ? 'selected' : ''}>Kurang Baik</option>
+                                <option value="Rusak Berat" ${item.condition === 'Rusak Berat' ? 'selected' : ''}>Rusak Berat</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1.5">Tahun Beli/Perolehan</label>
+                            <input type="number" id="item-tahun" value="${item.tahun}" required min="1900" max="2100" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkSurface outline-none focus:border-primary text-sm font-bold transition-shadow">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1.5">Sumber Dana</label>
+                            <select id="item-sumber" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkSurface outline-none focus:border-primary text-sm font-bold transition-shadow">
+                                <option value="Dana Desa" ${item.sumberDana==='Dana Desa'?'selected':''}>Dana Desa (DD)</option>
+                                <option value="ADD" ${item.sumberDana==='ADD'?'selected':''}>ADD</option>
+                                <option value="PADes" ${item.sumberDana==='PADes'?'selected':''}>PADes</option>
+                                <option value="Bantuan/Hibah" ${item.sumberDana==='Bantuan/Hibah'?'selected':''}>Bantuan / Hibah</option>
+                                <option value="Lainnya" ${item.sumberDana==='Lainnya'?'selected':''}>Lainnya</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1.5">Penempatan/Lokasi</label>
+                            <input type="text" id="item-lokasi" value="${item.lokasi}" required placeholder="Contoh: Ruang Rapat" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkSurface outline-none focus:border-primary text-sm font-bold transition-shadow">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1.5">Penanggung Jawab</label>
+                            <input type="text" id="item-pic" value="${item.pic}" required placeholder="Contoh: Kaur Umum" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkSurface outline-none focus:border-primary text-sm font-bold transition-shadow">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1.5">Detail Legal / Spesifikasi</label>
+                        <textarea id="item-spesifikasi" rows="2" placeholder="Luas tanah, Nopol kendaraan, No Sertifikat, Merk lengkap..." class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkSurface outline-none focus:border-primary text-sm font-medium transition-shadow">${item.spesifikasi}</textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1.5">Jumlah Stok</label>
+                            <input type="number" id="item-qty" value="${item.qty}" min="1" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkSurface outline-none focus:border-primary text-sm text-center font-black transition-shadow">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1.5">Harga Per Unit</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">Rp</span>
+                                <input type="text" id="item-price" value="${item.price}" required onkeyup="formatInputRupiah(this)" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkSurface outline-none focus:border-primary text-sm font-black transition-shadow">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 flex gap-3">
+                        ${!id ? `<button type="button" onclick="clearDraft()" class="w-1/3 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-3.5 rounded-xl font-extrabold btn-press text-sm transition-colors">Reset</button>` : ''}
+                        <button type="submit" class="${id ? 'w-full' : 'w-2/3'} bg-primary hover:bg-emerald-600 text-white py-3.5 rounded-xl font-extrabold btn-press shadow-xl shadow-primary/30 text-sm transition-colors">Simpan Formulir</button>
+                    </div>
+                </form>
+            `, true);
+        };
+
+        const toggleImgMethod = () => {
+            const isUrl = document.getElementById('img-method').value === 'url';
+            document.getElementById('input-url-wrapper').classList.toggle('hidden', !isUrl);
+            document.getElementById('input-upload-wrapper').classList.toggle('hidden', isUrl);
+        };
+
+        const handleImageUpload = (input) => {
+            if (input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('item-image-base64').value = e.target.result;
+                    document.getElementById('preview-img').src = e.target.result;
+                    document.getElementById('preview-img').classList.remove('hidden');
+                    document.getElementById('img-placeholder').classList.add('hidden');
+                    handleItemDraft();
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        };
+
+        const handleItemDraft = () => {
+            const isUrl = document.getElementById('img-method').value === 'url';
+            const draft = {
+                code: document.getElementById('item-code').value, name: document.getElementById('item-name').value,
+                category: document.getElementById('item-category').value, condition: document.getElementById('item-condition').value,
+                qty: document.getElementById('item-qty').value, price: document.getElementById('item-price').value,
+                tahun: document.getElementById('item-tahun').value, sumberDana: document.getElementById('item-sumber').value,
+                lokasi: document.getElementById('item-lokasi').value, pic: document.getElementById('item-pic').value,
+                spesifikasi: document.getElementById('item-spesifikasi').value,
+                image: isUrl ? document.getElementById('item-image-url').value : document.getElementById('item-image-base64').value
+            };
+            localStorage.setItem('asetdesa_item_draft', JSON.stringify(draft));
+        };
+
+        const clearDraft = () => { localStorage.removeItem('asetdesa_item_draft'); closeModal(); setTimeout(() => openModalItem(), 300); };
+
+        const saveItem = async (e, id) => {
+            e.preventDefault();
+            const isUrl = document.getElementById('img-method').value === 'url';
+            const rawPrice = document.getElementById('item-price').value.replace(/[^0-9]/g, '');
+            const existingItem = id ? currentState.items.find(i=>i.id===id) : {};
+
+            const payload = {
+                id: id || `itm-${Date.now()}`,
+                code: document.getElementById('item-code').value, name: document.getElementById('item-name').value,
+                category: document.getElementById('item-category').value, condition: document.getElementById('item-condition').value,
+                qty: parseInt(document.getElementById('item-qty').value), price: parseFloat(rawPrice || 0),
+                tahun: parseInt(document.getElementById('item-tahun').value), sumberDana: document.getElementById('item-sumber').value,
+                lokasi: document.getElementById('item-lokasi').value, pic: document.getElementById('item-pic').value,
+                spesifikasi: document.getElementById('item-spesifikasi').value,
+                image: isUrl ? document.getElementById('item-image-url').value : document.getElementById('item-image-base64').value,
+                date: existingItem.date || new Date().toISOString().split('T')[0],
+                status: existingItem.status || 'Aktif',
+                alasanHapus: existingItem.alasanHapus || '', tglHapus: existingItem.tglHapus || '',
+                isDummy: false // Data baru bukan dummy
+            };
+            
+            await dbAction('items', 'put', payload);
+            if (!id) localStorage.removeItem('asetdesa_item_draft');
+            showToast('Sip! Aset berhasil disimpan.');
+            closeModal(); switchView('items');
+        };
+
+        // --- 6. LOGIKA MUTASI (PENGHAPUSAN) ---
+        const confirmMutasi = (id) => {
+            openModal(`
+                <div class="text-center">
+                    <div class="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/30 text-red-500 mx-auto flex items-center justify-center mb-5 border-4 border-white dark:border-slate-800 shadow-xl">
+                        <i data-lucide="archive-x" class="w-10 h-10"></i>
+                    </div>
+                    <h3 class="text-2xl font-black mb-2 text-slate-800 dark:text-white">Proses Mutasi Aset</h3>
+                    <p class="text-xs text-slate-500 font-medium mb-6 px-4">Menurut pedoman pengelolaan, aset yang rusak atau hilang harus diubah statusnya, bukan dihapus permanen agar riwayatnya tetap terlacak.</p>
+                    
+                    <form onsubmit="executeMutasi(event, '${id}')" class="text-left space-y-4 mb-2">
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1.5">Alasan/Keterangan</label>
+                            <select id="mutasi-alasan" required class="w-full px-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkSurface outline-none text-sm font-bold shadow-sm">
+                                <option value="Rusak Berat / Total">Rusak Berat / Total</option>
+                                <option value="Hilang / Kecurian">Hilang / Kecurian</option>
+                                <option value="Dihibahkan">Dihibahkan ke Pihak Lain</option>
+                                <option value="Dilelang / Dijual">Dilelang / Dijual</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1.5">Tanggal Mutasi Keluar</label>
+                            <input type="date" id="mutasi-tgl" required value="${new Date().toISOString().split('T')[0]}" class="w-full px-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkSurface outline-none text-sm font-bold shadow-sm">
+                        </div>
+                        <div class="flex gap-3 pt-6">
+                            <button type="button" onclick="closeModal()" class="w-1/2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-3.5 rounded-xl font-extrabold btn-press transition-colors">Batal</button>
+                            <button type="submit" class="w-1/2 bg-red-500 hover:bg-red-600 text-white py-3.5 rounded-xl font-extrabold btn-press shadow-xl shadow-red-500/30 transition-colors">Proses Mutasi</button>
+                        </div>
+                    </form>
+                </div>
+            `);
+        };
+
+        const executeMutasi = async (e, id) => {
+            e.preventDefault();
+            const item = currentState.items.find(i => i.id === id);
+            if(!item) return;
+            item.status = 'Dihapus';
+            item.alasanHapus = document.getElementById('mutasi-alasan').value;
+            item.tglHapus = document.getElementById('mutasi-tgl').value;
+            
+            await dbAction('items', 'put', item);
+            showToast('Aset berhasil dipindahkan ke Buku Mutasi');
+            closeModal(); switchView('items');
+        };
+
+        const confirmHapusDummy = (id) => {
+            openModal(`
+                <div class="text-center">
+                    <div class="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/30 text-red-500 mx-auto flex items-center justify-center mb-5 border-4 border-white dark:border-slate-800 shadow-xl">
+                        <i data-lucide="trash-2" class="w-10 h-10"></i>
+                    </div>
+                    <h3 class="text-2xl font-black mb-2 text-slate-800 dark:text-white">Hapus Data Contoh?</h3>
+                    <p class="text-xs text-slate-500 font-medium mb-6 px-4">Ini adalah data contoh sistem. Data ini akan dihapus secara permanen agar buku mutasi dan laporan Anda tetap bersih.</p>
+                    
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="closeModal()" class="w-1/2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-3.5 rounded-xl font-extrabold btn-press transition-colors">Batal</button>
+                        <button onclick="executeHapusDummy('${id}')" class="w-1/2 bg-red-500 hover:bg-red-600 text-white py-3.5 rounded-xl font-extrabold btn-press shadow-xl shadow-red-500/30 transition-colors">Ya, Hapus Permanen</button>
+                    </div>
+                </div>
+            `);
+        };
+
+        const executeHapusDummy = async (id) => {
+            await dbAction('items', 'delete', id);
+            showToast('Data contoh berhasil dihapus permanen');
+            closeModal(); switchView('items');
+        };
+
+        // --- 7. LOGIKA KATEGORI ---
+        const openModalCategory = (id=null)=>{
+            const cat = id ? currentState.categories.find(c=>c.id===id) : {name:''};
+            openModal(`
+                <h2 class="text-2xl font-black mb-6 text-slate-800 dark:text-white">${id?'Edit Master Kategori':'Tambah Kategori Baru'}</h2>
+                <form onsubmit="saveCategory(event, '${id||''}')" class="space-y-5">
+                    <div>
+                        <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1.5">Nama Jenis/Kategori</label>
+                        <input type="text" id="cat-name" value="${cat.name}" required placeholder="Contoh: Mesin Pertanian" class="w-full px-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkSurface outline-none focus:border-primary font-bold shadow-sm">
+                    </div>
+                    <button type="submit" class="w-full bg-primary hover:bg-emerald-600 text-white py-3.5 rounded-xl font-extrabold mt-2 btn-press shadow-xl shadow-primary/30 transition-colors">Simpan Kategori</button>
+                </form>
+            `, true);
+        };
+        const saveCategory = async(e,id)=>{ e.preventDefault(); await dbAction('categories','put',{id:id||`kat-${Date.now()}`, name:document.getElementById('cat-name').value}); closeModal(); switchView('categories'); };
+        const confirmHapusKategori = (id)=>{ openModal(`<div class="text-center"><div class="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/30 text-red-500 mx-auto flex items-center justify-center mb-5 border-4 border-white dark:border-slate-800 shadow-xl"><i data-lucide="alert-triangle" class="w-10 h-10"></i></div><h3 class="text-2xl font-black mb-2">Hapus Kategori?</h3><p class="text-sm text-slate-500 font-medium mb-8">Aset yang menggunakan kategori ini mungkin akan kehilangan label golongannya.</p><div class="flex gap-3"><button onclick="closeModal()" class="w-1/2 py-3.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl font-extrabold btn-press text-slate-700 dark:text-slate-300 transition-colors">Batal</button><button onclick="executeDeleteKategori('${id}')" class="w-1/2 py-3.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-extrabold btn-press shadow-xl shadow-red-500/30 transition-colors">Ya, Hapus Saja</button></div></div>`); };
+        const executeDeleteKategori = async(id)=>{ await dbAction('categories','delete',id); closeModal(); switchView('categories'); };
+
+        // --- 8. QR SCANNER AUTO-START & CETAK QR ---
+        const viewDetail = (id) => {
+            const item = currentState.items.find(i => i.id === id); if(!item) return;
+            const catName = currentState.categories.find(c => c.id === item.category)?.name || '-';
+            
+            openModal(`
+                ${item.status === 'Dihapus' ? `<div class="bg-red-500 text-white text-center py-2 text-[10px] font-black tracking-widest uppercase rounded-t-3xl -mt-6 -mx-6 mb-5 shadow-sm">Aset Dimutasi: ${item.alasanHapus}</div>` : ''}
+                <div class="flex flex-col items-center mb-6">
+                    <div class="p-3 bg-white rounded-2xl border border-slate-200 shadow-sm mb-3">
+                        <canvas id="qr-canvas-detail" class="w-32 h-32"></canvas>
+                    </div>
+                    <p class="font-mono font-black text-lg text-primary tracking-widest bg-primary/10 px-3 py-1 rounded-lg">${item.code}</p>
+                </div>
+                <h2 class="text-2xl font-black text-center mb-1 text-slate-800 dark:text-white ${item.status==='Dihapus'?'line-through opacity-70':''}">${item.name}</h2>
+                <p class="text-xs text-center text-slate-500 font-bold uppercase tracking-wider mb-5">${catName} <span class="text-slate-300 dark:text-slate-600 mx-1">|</span> <i data-lucide="map-pin" class="w-3 h-3 inline pb-0.5"></i> ${item.lokasi}</p>
+                
+                <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 space-y-4 text-sm border border-slate-100 dark:border-slate-700/50 shadow-inner">
+                    <div class="flex justify-between"><span class="text-slate-500 font-medium">Kuasa / Penanggung Jawab</span><span class="font-bold text-slate-800 dark:text-white">${item.pic || '-'}</span></div>
+                    <div class="flex flex-col border-y border-slate-200 dark:border-slate-700 py-3"><span class="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider mb-1.5">Legalitas & Spesifikasi Fisik</span><span class="font-medium text-xs leading-relaxed text-slate-700 dark:text-slate-300 bg-white dark:bg-darkSurface p-3 rounded-xl border border-slate-100 dark:border-slate-800">${item.spesifikasi || '-'}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500 font-medium">Pengadaan & Sumber</span><span class="font-bold text-slate-800 dark:text-white">Th. ${item.tahun || '-'} <span class="text-primary">(${item.sumberDana || '-'})</span></span></div>
+                    <div class="flex justify-between"><span class="text-slate-500 font-medium">Kondisi Saat Ini</span><span class="font-bold ${item.condition === 'Baik' ? 'text-green-600' : 'text-amber-600'}">${item.condition}</span></div>
+                    <div class="flex justify-between border-t border-slate-200 dark:border-slate-700 pt-4"><span class="text-slate-500 font-medium">Volume & Satuan</span><span class="font-black text-slate-800 dark:text-white">${item.qty} Unit <span class="text-slate-400 font-medium text-xs ml-1">x ${formatRupiah(item.price)}</span></span></div>
+                    <div class="flex justify-between bg-primary/10 -mx-5 px-5 py-3 -mb-5 rounded-b-2xl mt-2 border-t border-primary/20"><span class="text-primary font-bold">Total Nilai Aset</span><span class="font-black text-primary text-xl">${formatRupiah(item.price * item.qty)}</span></div>
+                </div>
+            `, true);
+            setTimeout(() => { new QRious({ element: document.getElementById('qr-canvas-detail'), value: item.code, size: 200, foreground: '#0f172a' }); }, 100);
+        };
+
+        const openScannerModal = () => {
+            openModal(`
+                <div class="text-center mb-4">
+                    <h2 class="text-2xl font-black text-slate-800 dark:text-white mb-2">Scan Label Aset</h2>
+                    <p class="text-xs text-slate-500 font-medium">Arahkan kamera HP ke QR Code yang tertempel di barang untuk memunculkan detail instan.</p>
+                </div>
+                <div id="qr-reader" class="w-full bg-black rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-800 mb-6" style="min-height: 300px; aspect-ratio: 1/1;"></div>
+                <button onclick="closeScanner()" class="w-full bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-4 rounded-xl font-extrabold btn-press transition-colors">Tutup Kamera</button>
+            `);
+            
+            // Flag untuk mencegah multiple scanning saat kamera mencoba mati
+            let isScanningDone = false; 
+
+            setTimeout(() => {
+                html5QrCode = new Html5Qrcode("qr-reader");
+                html5QrCode.start(
+                    { facingMode: "environment" }, 
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    (decodedText, decodedResult) => {
+                        // Cegah sistem menembak kode berulang kali
+                        if (isScanningDone) return;
+                        isScanningDone = true;
+                        
+                        const item = currentState.items.find(i => i.code === decodedText);
+                        
+                        // Menunggu kamera berhenti 100% terlebih dahulu, lalu buka Modal Detail
+                        html5QrCode.stop().then(() => {
+                            html5QrCode.clear();
+                            html5QrCode = null;
+                            document.getElementById('modal-container').innerHTML = ''; // Tutup modal kamera
+                            
+                            if(item) { 
+                                showToast('Aset Ditemukan!'); 
+                                // Berikan sedikit jeda agar DOM bersih dari scanner sebelum modal detail merender
+                                setTimeout(() => viewDetail(item.id), 50); 
+                            } 
+                            else { 
+                                showToast('Kode label tidak dikenali oleh sistem.', 'error'); 
+                            }
+                        }).catch(() => {
+                            html5QrCode = null;
+                            document.getElementById('modal-container').innerHTML = '';
+                        });
+                    },
+                    (errorMessage) => { /* Abaikan error noise saat mencari barcode */ }
+                ).catch((err) => {
+                    document.getElementById('qr-reader').innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full p-6 text-center">
+                            <i data-lucide="camera-off" class="w-12 h-12 text-slate-600 mb-3"></i>
+                            <p class="text-sm font-bold text-slate-400">Gagal Mengakses Kamera</p>
+                            <p class="text-[10px] text-slate-500 mt-2">Pastikan Anda memberi izin (Allow) pada browser untuk menggunakan kamera.</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                });
+            }, 300);
+        };
+        
+        const closeScanner = () => { 
+            closeModal();
+        };
+
+        const printQRMassal = () => {
+            const aktifItems = currentState.items.filter(i => i.status === 'Aktif');
+            if(aktifItems.length === 0) return showToast('Belum ada data aset aktif', 'error');
+            const printContainer = document.getElementById('qr-print-area');
+            let html = '';
+            aktifItems.forEach(item => {
+                html += `
+                    <div class="qr-card">
+                        <div style="border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 10px;">
+                            <div style="font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Pemerintah Desa</div>
+                            <div style="font-size: 14px; font-weight: 900; letter-spacing: 0.5px; margin-top: 2px;">${currentState.appName}</div>
+                        </div>
+                        <div style="display: flex; justify-content: center; margin-bottom: 8px;">
+                            <canvas id="qr-print-${item.id}" style="display: block; margin: 0 auto;"></canvas>
+                        </div>
+                        <div style="font-size: 14px; font-weight: 900; letter-spacing: 1px;">${item.code}</div>
+                        <div style="font-size: 11px; font-weight: bold; margin-top: 4px; line-height: 1.2;">${item.name.substring(0, 30)}</div>
+                        <div style="font-size: 9px; color: #333; margin-top: 6px; font-weight: 600;">Th: ${item.tahun||'-'} | Pj: ${item.pic||'-'}</div>
+                    </div>`;
+            });
+            printContainer.innerHTML = html;
+            aktifItems.forEach(item => { 
+                new QRious({ 
+                    element: document.getElementById(`qr-print-${item.id}`), 
+                    value: item.code, 
+                    size: 130, 
+                    level: 'H',
+                    padding: 0
+                }); 
+            });
+            document.body.classList.add('print-mode-qr'); 
+            window.print();
+            setTimeout(() => document.body.classList.remove('print-mode-qr'), 1000);
+        };
+
+        // --- 9. LAPORAN & EXCEL ---
+        const renderReports = (container) => {
+            let html = renderEduBanner(
+                'Pusat Pelaporan', 
+                'Sistem otomatis merekap data menjadi Buku Inventaris resmi. Gunakan tombol Cetak PDF untuk laporan ke Kecamatan, atau Ekspor Excel untuk diolah lebih lanjut.',
+                'bar-chart-2'
+            );
+
+            html += `
+                <div class="bg-white dark:bg-darkSurface p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 mb-6 animate-fade-up delay-0">
+                    <h3 class="font-extrabold mb-5 text-center text-slate-800 dark:text-white">Statistik Kategori Aset Aktif</h3>
+                    <div class="relative h-72 w-full"><canvas id="categoryChart"></canvas></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-up delay-1">
+                    <button onclick="exportLaporanExcel()" class="bg-green-600 hover:bg-green-700 text-white p-5 rounded-3xl font-extrabold flex flex-col items-center justify-center gap-3 btn-press shadow-xl shadow-green-600/30 transition-colors">
+                        <i data-lucide="file-spreadsheet" class="w-10 h-10"></i><span>Unduh Excel (.xlsx)</span>
+                    </button>
+                    <button onclick="printReport()" class="bg-slate-800 hover:bg-slate-900 text-white p-5 rounded-3xl font-extrabold flex flex-col items-center justify-center gap-3 btn-press shadow-xl shadow-slate-800/30 transition-colors">
+                        <i data-lucide="printer" class="w-10 h-10"></i><span>Cetak Dokumen PDF</span>
+                    </button>
+                </div><div class="h-32 w-full shrink-0 block md:hidden"></div>
+            `;
+            container.innerHTML = html;
+            
+            const aktifItems = currentState.items.filter(i => i.status === 'Aktif');
+            document.getElementById('print-area').innerHTML = `
+                <h2 class="text-2xl font-bold text-center mb-1">${currentState.appName}</h2>
+                <p class="text-center text-sm mb-6 pb-4 border-b-2 border-black">Buku Inventaris Kekayaan Desa (Status: Aktif)</p>
+                <table class="w-full text-[10px] text-left border-collapse border border-black">
+                    <thead><tr>
+                        <th class="border border-black p-1.5">Kode Barang</th><th class="border border-black p-1.5">Nama & Spesifikasi</th>
+                        <th class="border border-black p-1.5">Thn. Beli</th><th class="border border-black p-1.5">Sbr. Dana</th>
+                        <th class="border border-black p-1.5">Lokasi & P. Jawab</th><th class="border border-black p-1.5">Kondisi</th>
+                        <th class="border border-black p-1.5 text-center">Vol</th><th class="border border-black p-1.5 text-right">Nilai (Rp)</th>
+                    </tr></thead>
+                    <tbody>${aktifItems.map(item => `
+                        <tr>
+                            <td class="border border-black p-1.5">${item.code}</td><td class="border border-black p-1.5"><b>${item.name}</b><br>${item.spesifikasi||''}</td>
+                            <td class="border border-black p-1.5 text-center">${item.tahun||'-'}</td><td class="border border-black p-1.5">${item.sumberDana||'-'}</td>
+                            <td class="border border-black p-1.5">${item.lokasi||'-'}<br>PIC: ${item.pic||'-'}</td><td class="border border-black p-1.5 text-center">${item.condition}</td>
+                            <td class="border border-black p-1.5 text-center">${item.qty}</td><td class="border border-black p-1.5 text-right">${formatRupiah(item.price)}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            setTimeout(() => {
+                const ctx = document.getElementById('categoryChart').getContext('2d');
+                const catLabels = currentState.categories.map(c => c.name);
+                const catData = currentState.categories.map(c => aktifItems.filter(i => i.category === c.id).reduce((sum, item) => sum + parseInt(item.qty), 0));
+                new Chart(ctx, { 
+                    type: 'doughnut', 
+                    data: { 
+                        labels: catLabels.length ? catLabels : ['Kosong'], 
+                        datasets: [{ data: catData.length && catData.some(d=>d>0) ? catData : [1], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'], borderWidth: 0, borderRadius: 5, hoverOffset: 10 }] 
+                    }, 
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { weight: 'bold' } } } }, cutout: '70%' } 
+                });
+            }, 100);
+        };
+        const printReport = () => { document.body.classList.add('print-mode-report'); window.print(); setTimeout(() => document.body.classList.remove('print-mode-report'), 1000); };
+
+        const exportLaporanExcel = () => {
+            const dataToExport = currentState.items.map(i => ({ 
+                'Status Aset': i.status, 'Kode': i.code, 'Nama Barang': i.name, 
+                'Kategori': currentState.categories.find(c=>c.id===i.category)?.name||'-', 
+                'Kondisi': i.condition, 'Jumlah': i.qty, 
+                'Harga Satuan': formatRupiah(i.price), 'Total Nilai': formatRupiah(i.qty*i.price), 
+                'Sumber Dana': i.sumberDana||'-', 'Tahun': i.tahun||'-', 
+                'Lokasi': i.lokasi||'-', 'Penanggung Jawab': i.pic||'-', 
+                'Spesifikasi': i.spesifikasi||'-', 'Tgl Input': formatTanggal(i.date), 
+                'Alasan Dihapus': i.alasanHapus||'-' 
+            }));
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dataToExport), "Laporan_Aset_Lengkap");
+            XLSX.writeFile(wb, `Laporan_AsetDesa_${new Date().toISOString().split('T')[0]}.xlsx`);
+            showToast('Sip! Laporan Excel berhasil diunduh.');
+        };
+
+        // --- 10. SETTINGS & PANDUAN ---
+        const renderSettings = (container) => {
+            let html = renderEduBanner(
+                'Pengaturan Sistem', 
+                'Menu untuk mengelola identitas aplikasi (Nama & Logo), mengatur warna tema visual yang Anda inginkan, mencadangkan data, serta mempelajari panduan penggunaan.',
+                'settings'
+            );
+
+            const colors = ['#10b981', '#3b82f6', '#8b5cf6', '#f43f5e', '#f59e0b', '#0ea5e9', '#0f172a'];
+            html += `
+                <div class="space-y-4 max-w-2xl mx-auto">
+                    
+                    <!-- Buku Panduan -->
+                    <div class="bg-blue-600 p-1 rounded-3xl animate-fade-up delay-0 shadow-lg shadow-blue-600/30">
+                        <button onclick="openPanduanModal()" class="w-full bg-blue-500 hover:bg-blue-400 text-white p-4 rounded-[20px] font-extrabold flex items-center justify-between transition-colors btn-press">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-white/20 rounded-xl"><i data-lucide="book-open-check" class="w-6 h-6"></i></div>
+                                <span class="text-left"><span class="block text-lg">Buku Panduan ASN</span><span class="block text-[10px] font-medium text-blue-100 uppercase tracking-wider">Pelajari Cara Pakai Sistem Secara Cepat</span></span>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-6 h-6 opacity-50"></i>
+                        </button>
+                    </div>
+
+                    <!-- Identitas & Logo -->
+                    <div class="bg-white dark:bg-darkSurface p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 animate-fade-up delay-1">
+                        <h3 class="font-extrabold text-sm mb-5 flex items-center gap-2 text-slate-800 dark:text-white"><i data-lucide="building" class="w-5 h-5 text-primary"></i> Identitas Instansi</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1.5">Nama Aplikasi / Instansi</label>
+                                <input type="text" id="set-app-name" value="${currentState.appName}" class="w-full px-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 outline-none focus:border-primary font-bold shadow-sm">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1.5">Logo Aplikasi (URL atau Upload)</label>
+                                <div class="flex gap-3 items-center">
+                                    <div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                                        <img id="set-logo-preview" src="${currentState.appLogo}" class="w-full h-full object-cover ${currentState.appLogo ? '' : 'hidden'}">
+                                        <i data-lucide="image" class="${currentState.appLogo ? 'hidden' : ''} text-slate-400 w-5 h-5"></i>
+                                    </div>
+                                    <input type="url" id="set-app-logo" value="${currentState.appLogo}" placeholder="URL Gambar Logo" oninput="document.getElementById('set-logo-preview').src=this.value; document.getElementById('set-logo-preview').classList.remove('hidden');" class="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 outline-none focus:border-primary text-sm font-medium shadow-sm">
+                                </div>
+                            </div>
+                            <button onclick="saveIdentity()" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-3.5 rounded-xl font-extrabold btn-press transition-colors shadow-lg shadow-slate-800/20">Terapkan Identitas</button>
+                        </div>
+                    </div>
+
+                    <!-- Warna Tema Dinamis -->
+                    <div class="bg-white dark:bg-darkSurface p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 animate-fade-up delay-2">
+                        <h3 class="font-extrabold text-sm mb-5 flex items-center gap-2 text-slate-800 dark:text-white"><i data-lucide="palette" class="w-5 h-5 text-primary"></i> Kustomisasi Tema</h3>
+                        <div class="flex gap-3 flex-wrap items-center">
+                            ${colors.map(color => `<button onclick="changePrimaryColor('${color}')" class="w-12 h-12 rounded-full border-4 ${currentState.primaryColor === color ? 'border-slate-300 dark:border-slate-600 scale-110 shadow-lg' : 'border-white dark:border-darkSurface hover:scale-105'} transition-transform shadow-md" style="background-color: ${color}"></button>`).join('')}
+                            <div class="w-[2px] h-8 bg-slate-100 dark:bg-slate-800 mx-1"></div>
+                            <div class="relative w-12 h-12 rounded-full overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center hover:scale-105 transition-transform group cursor-pointer">
+                                <i data-lucide="plus" class="w-5 h-5 text-slate-400 group-hover:text-primary"></i>
+                                <input type="color" onchange="changePrimaryColor(this.value)" value="${currentState.primaryColor}" class="absolute -top-4 -left-4 w-20 h-20 cursor-pointer opacity-0">
+                            </div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Warna Bebas</span>
+                        </div>
+                    </div>
+
+                    <!-- Backup -->
+                    <div class="bg-white dark:bg-darkSurface p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 animate-fade-up delay-3">
+                        <h3 class="font-extrabold text-sm mb-4 flex items-center gap-2 text-slate-800 dark:text-white"><i data-lucide="database" class="w-5 h-5 text-primary"></i> Database System</h3>
+                        <div class="grid grid-cols-2 gap-3 mb-6">
+                            <button onclick="exportBackupExcel()" class="bg-primary/10 text-primary px-4 py-3.5 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2 transition-colors hover:bg-primary hover:text-white"><i data-lucide="download-cloud" class="w-5 h-5"></i> Ekspor Data</button>
+                            <label class="bg-blue-50 text-blue-600 px-4 py-3.5 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2 cursor-pointer transition-colors hover:bg-blue-600 hover:text-white"><i data-lucide="upload-cloud" class="w-5 h-5"></i> Impor Data<input type="file" accept=".xlsx, .xls" onchange="importBackupExcel(this)" class="hidden"></label>
+                        </div>
+                        <div class="pt-5 border-t border-slate-100 dark:border-slate-700/50">
+                            <button onclick="confirmResetDB()" class="w-full bg-red-50 text-red-600 px-4 py-3.5 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2 transition-colors hover:bg-red-600 hover:text-white"><i data-lucide="alert-triangle" class="w-5 h-5"></i> Format Pabrik Sistem</button>
+                        </div>
+                    </div>
+                </div><div class="h-32 w-full shrink-0 block md:hidden"></div>
+            `;
+            container.innerHTML = html;
+        };
+
+        const saveIdentity = () => {
+            const name = document.getElementById('set-app-name').value;
+            const logo = document.getElementById('set-app-logo').value;
+            if(!name) return showToast('Nama Instansi tidak boleh kosong', 'error');
+            currentState.appName = name;
+            currentState.appLogo = logo;
+            localStorage.setItem('asetdesa_name', name);
+            localStorage.setItem('asetdesa_logo', logo);
+            applySettings();
+            showToast('Identitas Sistem berhasil diperbarui.');
+        };
+
+        const changePrimaryColor = (hex) => { currentState.primaryColor = hex; localStorage.setItem('asetdesa_color', hex); applySettings(); renderSettings(document.getElementById('app-content').firstElementChild); };
+
+        const exportBackupExcel = () => {
+            const itemsExp = currentState.items.map(i => ({ id: i.id, code: i.code, name: i.name, category: i.category, condition: i.condition, qty: i.qty, price: formatRupiah(i.price), tahun: i.tahun, sumberDana: i.sumberDana, lokasi: i.lokasi, pic: i.pic, spesifikasi: i.spesifikasi, date: formatTanggal(i.date), status: i.status, alasanHapus: i.alasanHapus, tglHapus: formatTanggal(i.tglHapus), image: i.image }));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemsExp), "Data_Aset");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(currentState.categories), "Kategori");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{ appName: currentState.appName, appLogo: currentState.appLogo, theme: currentState.theme, primaryColor: currentState.primaryColor }]), "Pengaturan");
+            XLSX.writeFile(wb, `Backup_Sistem_AsetDesa_${new Date().toISOString().split('T')[0]}.xlsx`);
+            showToast('File Backup Induk berhasil diunduh.');
+        };
+
+        const importBackupExcel = (input) => {
+            if(!input.files[0]) return; const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
+                    const itemsRaw = XLSX.utils.sheet_to_json(workbook.Sheets["Data_Aset"]);
+                    const categoriesRaw = XLSX.utils.sheet_to_json(workbook.Sheets["Kategori"]);
+                    
+                    const parsedItems = itemsRaw.map(i => {
+                        let rp = 0; if(typeof i.price==='string') rp=parseFloat(i.price.replace(/[^0-9]/g,"")); else rp=parseFloat(i.price);
+                        let rd = i.date; if(typeof i.date==='string' && i.date.includes('/')){ const p=i.date.split('/'); if(p.length===3) rd=`${p[2]}-${p[1]}-${p[0]}`; }
+                        let rt = i.tglHapus; if(typeof i.tglHapus==='string' && i.tglHapus.includes('/')){ const p=i.tglHapus.split('/'); if(p.length===3) rt=`${p[2]}-${p[1]}-${p[0]}`; }
+                        return { ...i, qty: parseInt(i.qty)||0, price: isNaN(rp)?0:rp, tahun: parseInt(i.tahun)||null, date: rd, tglHapus: rt, status: i.status||'Aktif' };
+                    });
+
+                    await dbAction('items', 'clear'); await dbAction('categories', 'clear');
+                    for(let c of categoriesRaw) if(c.id) await dbAction('categories', 'put', c);
+                    for(let i of parsedItems) if(i.id) await dbAction('items', 'put', i);
+                    
+                    if(workbook.Sheets["Pengaturan"]){
+                        const s = XLSX.utils.sheet_to_json(workbook.Sheets["Pengaturan"])[0];
+                        if(s.appName) localStorage.setItem('asetdesa_name', s.appName);
+                        if(s.appLogo !== undefined) localStorage.setItem('asetdesa_logo', s.appLogo);
+                        if(s.theme) localStorage.setItem('asetdesa_theme', s.theme);
+                        if(s.primaryColor) localStorage.setItem('asetdesa_color', s.primaryColor);
+                    }
+                    showToast('Pemulihan Selesai! Memuat ulang...'); setTimeout(()=>window.location.reload(), 1500);
+                } catch(err){ showToast('Gagal: Pastikan Anda memilih file Backup AsetDesa yang valid.', 'error'); }
+            }; reader.readAsArrayBuffer(input.files[0]); input.value = "";
+        };
+
+        const confirmResetDB = () => { 
+            openModal(`
+            <div class="text-center">
+                <div class="w-24 h-24 rounded-full bg-red-100 dark:bg-red-900/30 text-red-500 mx-auto flex items-center justify-center mb-5 border-8 border-white dark:border-slate-800 shadow-2xl">
+                    <i data-lucide="alert-triangle" class="w-12 h-12"></i>
+                </div>
+                <h3 class="text-3xl font-black mb-3 text-slate-800 dark:text-white">Awas! Reset Pabrik</h3>
+                <p class="text-sm text-slate-500 font-medium mb-8">Tindakan ini akan mengosongkan seluruh isi Aplikasi. Pastikan Anda sudah mengekspor/mencadangkan data sebelum melanjutkan.</p>
+                <div class="flex gap-4">
+                    <button onclick="closeModal()" class="w-1/2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-2xl font-extrabold py-4 text-slate-700 dark:text-slate-300 btn-press transition-colors">Batal</button>
+                    <button onclick="executeReset()" class="w-1/2 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-extrabold py-4 btn-press shadow-xl shadow-red-600/30 transition-colors">Ya, Kosongkan</button>
+                </div>
+            </div>`); 
+        };
+        const executeReset = async () => { await dbAction('items', 'clear'); await dbAction('categories', 'clear'); window.location.reload(); };
+
+        // MODAL BUKU PANDUAN ASN
+        const openPanduanModal = () => {
+            openModal(`
+                <h2 class="text-2xl font-black mb-2 text-slate-800 dark:text-white flex items-center gap-3"><i data-lucide="book-open-check" class="w-8 h-8 text-primary"></i> Manual Book (SOP)</h2>
+                <p class="text-xs text-slate-500 font-medium mb-6 pb-4 border-b border-slate-100 dark:border-slate-700">Panduan Penggunaan Sistem Manajemen Inventaris Desa.</p>
+                
+                <div class="space-y-4 text-sm text-slate-700 dark:text-slate-300">
+                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
+                        <h4 class="font-extrabold text-primary mb-2">1. Menginput Aset Baru</h4>
+                        <p class="leading-relaxed text-xs">Masuk ke menu <span class="font-bold">Buku Aset</span>, klik tombol <span class="font-bold">Tambah Aset</span>. Isi semua informasi. Jika pengisian belum selesai dan tak sengaja tertutup, data ketikan Anda otomatis tersimpan (Draf) dan akan dilanjutkan saat menu dibuka kembali.</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
+                        <h4 class="font-extrabold text-primary mb-2">2. Prosedur Mutasi (Menghapus Aset)</h4>
+                        <p class="leading-relaxed text-xs">Untuk mematuhi standar audit pemerintahan, klik tombol <span class="font-bold">Mutasi/Hapus</span> yang berwarna merah pada baris barang. Barang tidak terhapus hilang, tapi pindah ke <span class="font-bold">Menu Mutasi</span> agar riwayatnya (misal: Rusak Berat, Dijual) tetap valid di Laporan Akhir Tahun.</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
+                        <h4 class="font-extrabold text-primary mb-2">3. Pencetakan & Scanner Label QR</h4>
+                        <p class="leading-relaxed text-xs">Klik <span class="font-bold">Cetak QR Massal</span> pada Buku Aset untuk mencetak stiker QR (Gunakan kertas stiker). Jika ditempel di barang, Anda cukup menekan tombol <span class="font-bold">Scan QR Kamera</span> di sebelah kiri/atas aplikasi, arahkan kamera, dan detail barang seketika muncul!</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
+                        <h4 class="font-extrabold text-primary mb-2">4. Laporan & Ekspor/Impor (Penting!)</h4>
+                        <p class="leading-relaxed text-xs">Gunakan menu <span class="font-bold">Laporan</span> untuk mencetak rekapitulasi data format PDF atau Excel. Sangat disarankan rutin men-download <span class="font-bold">Ekspor Data</span> di Pengaturan. File Excel Backup ini adalah nyawa jika suatu hari laptop/komputer Anda rusak. Cukup klik Impor Data di laptop baru.</p>
+                    </div>
+                </div>
+                <button onclick="closeModal()" class="w-full mt-6 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-3.5 rounded-xl font-extrabold btn-press transition-colors">Tutup Panduan</button>
+            `);
+        };
+
+        // --- 11. BOOTSTRAP UTILS ---
+        const openModal = (html, onSwipeClose = null) => { 
+            document.getElementById('modal-container').innerHTML = `
+            <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center glass-modal animate-fade-up">
+                <div class="bg-white dark:bg-darkSurface w-full md:w-[550px] max-h-[90vh] md:max-h-[85vh] rounded-t-[2rem] md:rounded-3xl shadow-2xl overflow-hidden flex flex-col relative border border-white/20 dark:border-slate-700/50">
+                    <button onclick="closeModal()" class="absolute top-4 right-4 p-2.5 bg-slate-100 hover:bg-red-100 text-slate-500 hover:text-red-500 dark:bg-slate-800 dark:hover:bg-red-900/50 dark:text-slate-400 dark:hover:text-red-400 rounded-full z-10 btn-press transition-colors shadow-sm"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    <div class="overflow-y-auto w-full p-6 md:p-8 pb-safe md:pb-8">${html}</div>
+                </div>
+            </div>`; 
+            lucide.createIcons(); 
+        };
+
+        const closeModal = () => { 
+            if(html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; document.getElementById('modal-container').innerHTML = ''; }).catch(err => { html5QrCode = null; document.getElementById('modal-container').innerHTML = ''; });
+            } else {
+                if(html5QrCode) { html5QrCode.clear(); html5QrCode = null; }
+                document.getElementById('modal-container').innerHTML = ''; 
+            }
+        };
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', async () => { 
+            applySettings(); 
+            await initDB(); 
+            switchView('dashboard'); 
+        });
+
+    </script>
+    <!-- FILE: source/assets/js/app.js END -->
+</body>
+</html>

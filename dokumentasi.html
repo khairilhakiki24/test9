@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Book - AsetDesa Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; }
+        .prose h2 { color: #0f172a; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
+        .prose h3 { color: #334155; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        .prose code { background: #e2e8f0; padding: 0.2rem 0.4rem; border-radius: 0.25rem; color: #0ea5e9; font-size: 0.875em; font-weight: bold; }
+        .step-box { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
+    </style>
+</head>
+<body class="text-slate-800 p-4 md:p-10">
+
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-black text-emerald-600 mb-2">AsetDesa Pro V4</h1>
+            <p class="text-lg text-slate-500 font-medium">Buku Panduan Penggunaan & Modifikasi (Standar ASN)</p>
+        </header>
+
+        <div class="prose max-w-none">
+            
+            <h2>1. Fitur Utama & Standar Audit</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="step-box">
+                    <h3 class="mt-0">Sistem Mutasi (Anti-Hapus Permanen)</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">Sesuai Permendagri tentang pengelolaan aset, data barang tidak boleh dihapus secara permanen. Aplikasi ini menggunakan sistem <b>Soft-Delete</b>. Aset yang rusak atau dilelang akan dipindahkan ke Buku Mutasi lengkap dengan tanggal dan alasannya.</p>
+                </div>
+                <div class="step-box">
+                    <h3 class="mt-0">Scanner QR Code Terintegrasi</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">Aplikasi dilengkapi generator Label QR yang dapat dicetak massal. Untuk memantau barang fisik, cukup tekan tombol <b>Scan QR Kamera</b>, arahkan kamera HP/Tablet, dan spesifikasi aset akan muncul otomatis di layar.</p>
+                </div>
+            </div>
+
+            <h2>2. Manajemen Data & Keamanan (Sangat Penting)</h2>
+            <div class="step-box border-l-4 border-blue-500">
+                <h3>Backup & Restore Otomatis via Excel</h3>
+                <p class="text-sm mb-2">Aplikasi berjalan 100% secara offline di perangkat Anda. Agar data aman jika perangkat rusak, lakukan hal berikut:</p>
+                <ol class="text-sm list-decimal pl-5 text-slate-600 space-y-2">
+                    <li>Buka menu <b>Pengaturan</b>.</li>
+                    <li>Klik <b>Ekspor Data</b> untuk mengunduh file berekstensi <code>.xlsx</code>. File ini berisi seluruh database (Buku Aset, Mutasi, Kategori, dan Pengaturan Tema).</li>
+                    <li>Simpan file tersebut di Flashdisk atau Google Drive Anda.</li>
+                    <li>Jika Anda berpindah laptop, cukup masuk ke Pengaturan lagi dan klik <b>Impor Data</b>, lalu pilih file Excel tadi. Seluruh aplikasi akan pulih seperti semula.</li>
+                </ol>
+            </div>
+
+            <h2>3. Modifikasi Tema & Identitas (Tanpa Coding)</h2>
+            <div class="step-box border-l-4 border-emerald-500">
+                <p class="text-sm mb-2">Anda tidak perlu mengerti bahasa pemrograman untuk mengubah tampilan dasar aplikasi ini. Akses menu <b>Pengaturan</b> di dalam aplikasi untuk:</p>
+                <ul class="text-sm list-disc pl-5 text-slate-600 space-y-1">
+                    <li>Mengganti <b>Nama Instansi</b>.</li>
+                    <li>Menyematkan <b>Logo</b> (bisa berupa Link URL gambar atau Upload File dari komputer).</li>
+                    <li>Mengganti <b>Warna Tema Utama</b> menggunakan Color Picker. Seluruh tombol, garis, dan highlight aplikasi akan mengikuti warna yang Anda pilih seketika.</li>
+                </ul>
+            </div>
+
+            <h2>4. Panduan Modifikasi Lanjutan (Untuk Pembeli CodeCanyon)</h2>
+            <p class="text-sm mb-4">File utama aplikasi ini digabung dalam satu file <code>index.html</code> untuk mempermudah <i>preview</i>. Namun, kami telah menyematkan komentar pemisah standar CodeCanyon untuk mempermudah Anda memecah file tersebut ke struktur <i>folder assets</i>.</p>
+            
+            <div class="step-box bg-slate-900 text-slate-300 border-none">
+                <p class="text-sm mb-2"><strong class="text-emerald-400">Langkah 1: Memisahkan CSS</strong></p>
+                <p class="text-xs mb-4 leading-relaxed">Buka file <code>index.html</code>, cari komentar HTML yang berbunyi <code>&lt;!-- FILE: source/assets/css/style.css START --&gt;</code>. Potong seluruh kode <code>&lt;style&gt;...&lt;/style&gt;</code> di area tersebut dan tempelkan ke dalam file baru bernama <code>style.css</code> di folder assets/css. Ganti tag di html menjadi <code>&lt;link rel="stylesheet" href="assets/css/style.css"&gt;</code>.</p>
+                
+                <p class="text-sm mb-2"><strong class="text-emerald-400">Langkah 2: Memisahkan JavaScript</strong></p>
+                <p class="text-xs mb-0 leading-relaxed">Gulir ke bagian paling bawah <code>index.html</code>. Temukan komentar <code>// FILE: source/assets/js/app.js START</code>. Potong kode di dalam tag <code>&lt;script&gt;...&lt;/script&gt;</code>, buat file <code>app.js</code> di folder assets/js, dan panggil menggunakan tag script eksternal.</p>
+            </div>
+
+            <h2>5. Panduan Instalasi (Hosting CPanel)</h2>
+            <div class="step-box">
+                <ol class="text-sm list-decimal pl-5 text-slate-600 space-y-2">
+                    <li>Siapkan domain/subdomain yang sudah memiliki Sertifikat SSL aktif (<b>wajib HTTPS</b> agar fitur Kamera dan PWA berfungsi).</li>
+                    <li>Login ke cPanel Hosting Anda, masuk ke menu <b>File Manager</b>.</li>
+                    <li>Buka direktori <code>public_html</code> atau folder subdomain Anda.</li>
+                    <li>Upload seluruh file (<code>index.html</code>, <code>manifest.json</code>, <code>sw.js</code>, dan folder <code>assets</code> jika Anda menambahkan icon).</li>
+                    <li>Selesai! Aplikasi sudah dapat diakses dan diinstal (Add to Home Screen) melalui HP atau PC mana pun.</li>
+                </ol>
+            </div>
+
+        </div>
+
+        <footer class="mt-16 text-center text-sm text-slate-500 pb-8 border-t border-slate-200 pt-8">
+            <p class="font-bold">© 2026 Bejaja Digital. Hak Cipta Dilindungi.</p>
+            <p class="mt-1 text-xs">Sistem Informasi Eksekutif Berbasis Web PWA Offline.</p>
+        </footer>
+    </div>
+
+</body>
+</html>

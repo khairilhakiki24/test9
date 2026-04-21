@@ -1006,9 +1006,18 @@
                     padding: 0
                 }); 
             });
+            
+            // FIX: Hapus class hidden sementara agar cetakan muncul
+            printContainer.classList.remove('hidden');
             document.body.classList.add('print-mode-qr'); 
+            
             window.print();
-            setTimeout(() => document.body.classList.remove('print-mode-qr'), 1000);
+            
+            setTimeout(() => {
+                document.body.classList.remove('print-mode-qr');
+                // FIX: Kembalikan class hidden
+                printContainer.classList.add('hidden');
+            }, 1000);
         };
 
         // --- 9. LAPORAN & EXCEL ---
@@ -1071,7 +1080,21 @@
                 });
             }, 100);
         };
-        const printReport = () => { document.body.classList.add('print-mode-report'); window.print(); setTimeout(() => document.body.classList.remove('print-mode-report'), 1000); };
+        
+        const printReport = () => { 
+            const printArea = document.getElementById('print-area');
+            // FIX: Hapus class hidden sementara agar tabel muncul
+            printArea.classList.remove('hidden'); 
+            document.body.classList.add('print-mode-report'); 
+            
+            window.print(); 
+            
+            setTimeout(() => {
+                document.body.classList.remove('print-mode-report');
+                // FIX: Kembalikan class hidden
+                printArea.classList.add('hidden');
+            }, 1000); 
+        };
 
         const exportLaporanExcel = () => {
             const dataToExport = currentState.items.map(i => ({ 
@@ -1101,7 +1124,6 @@
             html += `
                 <div class="space-y-4 max-w-2xl mx-auto">
                     
-                    <!-- Buku Panduan -->
                     <div class="bg-blue-600 p-1 rounded-3xl animate-fade-up delay-0 shadow-lg shadow-blue-600/30">
                         <button onclick="openPanduanModal()" class="w-full bg-blue-500 hover:bg-blue-400 text-white p-4 rounded-[20px] font-extrabold flex items-center justify-between transition-colors btn-press">
                             <div class="flex items-center gap-3">
@@ -1112,7 +1134,6 @@
                         </button>
                     </div>
 
-                    <!-- Identitas & Logo -->
                     <div class="bg-white dark:bg-darkSurface p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 animate-fade-up delay-1">
                         <h3 class="font-extrabold text-sm mb-5 flex items-center gap-2 text-slate-800 dark:text-white"><i data-lucide="building" class="w-5 h-5 text-primary"></i> Identitas Instansi</h3>
                         <div class="space-y-4">
@@ -1134,7 +1155,6 @@
                         </div>
                     </div>
 
-                    <!-- Warna Tema Dinamis -->
                     <div class="bg-white dark:bg-darkSurface p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 animate-fade-up delay-2">
                         <h3 class="font-extrabold text-sm mb-5 flex items-center gap-2 text-slate-800 dark:text-white"><i data-lucide="palette" class="w-5 h-5 text-primary"></i> Kustomisasi Tema</h3>
                         <div class="flex gap-3 flex-wrap items-center">
@@ -1148,7 +1168,6 @@
                         </div>
                     </div>
 
-                    <!-- Backup -->
                     <div class="bg-white dark:bg-darkSurface p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 animate-fade-up delay-3">
                         <h3 class="font-extrabold text-sm mb-4 flex items-center gap-2 text-slate-800 dark:text-white"><i data-lucide="database" class="w-5 h-5 text-primary"></i> Database System</h3>
                         <div class="grid grid-cols-2 gap-3 mb-6">
@@ -1292,6 +1311,5 @@
         });
 
     </script>
-    <!-- FILE: source/assets/js/app.js END -->
 </body>
 </html>
